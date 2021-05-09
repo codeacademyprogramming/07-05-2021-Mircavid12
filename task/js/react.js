@@ -1,18 +1,48 @@
+//Getting current time format as day.month.year
+var dateObj = new Date();
+var month = dateObj.getUTCMonth() + 1;
+var day = dateObj.getUTCDate();
+var year = dateObj.getUTCFullYear();
 
+var arr1 = [];
+var arr2 = [];
 function getJson() {
   fetch("./js/article.json")
     .then(function (response) {
       return response.json();
     })
     .then(function (articles) {
-      //Getting current time format as day.month.year
-      var dateObj = new Date();
-      var month = dateObj.getUTCMonth() + 1;
-      var day = dateObj.getUTCDate();
-      var year = dateObj.getUTCFullYear();
-      var arr1 = [];
-      var arr2 = [];
 
+    
+      articles.forEach(function (article) {
+        var active = 0;
+        for (var i = 0; i < article.loans.length; i++) {
+          if (article.loans[i].loanPeriod.end.slice(6) > year) {
+            active++;
+          } else {
+            if (
+              article.loans[i].loanPeriod.end.slice(3, 5) > month &&
+              article.loans[i].loanPeriod.end.slice(6) == year
+            ) {
+              active++;
+            } else {
+              if (
+                article.loans[i].loanPeriod.end.slice(0, 2) > day &&
+                article.loans[i].loanPeriod.end.slice(6) == year &&
+                article.loans[i].loanPeriod.end.slice(3, 5) == month
+              ) {
+                active++;
+              }
+            }
+          }
+        }
+        if(active>0){
+            arr1.push(article);
+        }
+        else{
+            arr2.push(article);
+        }
+      });
       function compare(a, b) {
         if (a.name < b.name) {
           return -1;
@@ -22,13 +52,14 @@ function getJson() {
         }
         return 0;
       }
+      arr1.sort(compare);
+      arr2.sort(compare);
+      var result=arr1.concat(arr2);
 
-      articles.sort(compare);
+      var mainBody = document.getElementById("mainBody");
 
-      var orders = 1;
-
-      articles.forEach(function (article) {
-        var mainBody = document.getElementById("mainBody");
+      var orders=1;
+      result.forEach(function (article) {
         var tr = document.createElement("tr");
         var th = document.createElement("th");
         th.setAttribute("scope", "row");
@@ -194,8 +225,6 @@ function getJson() {
           activeLoan.innerHTML = '<p class="text-danger">False</p>';
           arr2.push(article);
         }
-        console.log(arr1)
-        console.log(arr2);
         var sum;
         sum = sumOfPay;
         if (sumOfPay != 0) {
@@ -224,7 +253,10 @@ function getJson() {
         tr.appendChild(totalMonthlyPay);
         tr.appendChild(canBeApplied);
         orders += 1;
+        
       });
     });
+    
 }
+
 getJson();
